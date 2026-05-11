@@ -22,6 +22,9 @@ public class GameController {
 
     @PostMapping("/games")
     public ResponseEntity<GameStateResponse> createGame(@RequestBody CreateGameRequest request) {
+        if (request.aiDifficulty() == null || request.variant() == null || request.playerSide() == null) {
+            throw new IllegalArgumentException("aiDifficulty, variant, and playerSide are required");
+        }
         Game game = gameService.createGame(request.aiDifficulty(), request.variant(), request.playerSide());
         return ResponseEntity.status(HttpStatus.CREATED).body(GameStateResponse.fromGame(game));
     }

@@ -5,9 +5,10 @@ import './NewGameDialog.css';
 interface NewGameDialogProps {
   onStart: (difficulty: AiDifficulty, variant: GameVariant, side: Player) => void;
   loading: boolean;
+  error: string | null;
 }
 
-export default function NewGameDialog({ onStart, loading }: NewGameDialogProps) {
+export default function NewGameDialog({ onStart, loading, error }: NewGameDialogProps) {
   const [variant, setVariant] = useState<GameVariant>('REVERSIO');
   const [difficulty, setDifficulty] = useState<AiDifficulty>('MEDIUM');
   const [side, setSide] = useState<Player>('BLACK');
@@ -71,6 +72,8 @@ export default function NewGameDialog({ onStart, loading }: NewGameDialogProps) 
           </button>
         </div>
       </div>
+
+      {error && <div className="new-game-dialog__error">{error}</div>}
 
       <button
         className="btn btn--primary"

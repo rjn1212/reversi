@@ -22,4 +22,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("INVALID_MOVE", e.getMessage()));
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("BAD_REQUEST", e.getMessage()));
+    }
 }

@@ -24,7 +24,7 @@ function App() {
     return (
       <div className="app">
         <h1>Reversio</h1>
-        <NewGameDialog onStart={newGame} loading={loading} />
+        <NewGameDialog onStart={newGame} loading={loading} error={error} />
       </div>
     );
   }
