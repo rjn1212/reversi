@@ -1,14 +1,15 @@
+import { PlatformClient } from '@gitgames/platform-sdk';
 import type { AiDifficulty, GameState, GameVariant, MoveResponse, Player, Position, ValidMovesResponse } from '../types/game.ts';
+
+export const platform = new PlatformClient();
 
 const BASE_URL = '/api/v1';
 
 function getHeaders(): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = sessionStorage.getItem('platformToken');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
+  return {
+    'Content-Type': 'application/json',
+    ...platform.getAuthHeaders(),
+  };
 }
 
 export const gameApi = {

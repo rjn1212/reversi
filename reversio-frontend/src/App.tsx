@@ -1,25 +1,9 @@
-import { useEffect } from 'react';
 import { useGame } from './hooks/useGame.ts';
 import NewGameDialog from './components/Common/NewGameDialog.tsx';
 import GameView from './components/Game/GameView.tsx';
 import GameOverDialog from './components/Common/GameOverDialog.tsx';
 
-function extractPlatformParams() {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('platformToken');
-  const returnUrl = params.get('returnUrl');
-  if (token) sessionStorage.setItem('platformToken', token);
-  if (returnUrl) sessionStorage.setItem('returnUrl', returnUrl);
-  if (token || returnUrl) {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('platformToken');
-    url.searchParams.delete('returnUrl');
-    history.replaceState(null, '', url.pathname + url.search + url.hash);
-  }
-}
-
 function App() {
-  useEffect(() => { extractPlatformParams(); }, []);
 
   const {
     game, validMoves, mustPass, loading, error, aiThinking,

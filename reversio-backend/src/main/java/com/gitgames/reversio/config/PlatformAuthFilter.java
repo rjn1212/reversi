@@ -30,12 +30,12 @@ public class PlatformAuthFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
             try {
                 Algorithm algorithm = Algorithm.HMAC256(jwtSecret);
-                JWTVerifier verifier = JWT.require(algorithm).build();
+                JWTVerifier verifier = JWT.require(algorithm).withIssuer("game-platform").build();
                 DecodedJWT jwt = verifier.verify(token);
 
                 request.setAttribute("platformUserId", jwt.getSubject());
                 request.setAttribute("platformUserRole", jwt.getClaim("role").asString());
-                request.setAttribute("platformUserName", jwt.getClaim("name").asString());
+                request.setAttribute("platformUsername", jwt.getClaim("username").asString());
             } catch (JWTVerificationException e) {
                 // Invalid token — continue anonymously
             }

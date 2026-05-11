@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,19 +48,23 @@ public class PlatformScoreReporter {
         String outcome = draw ? "draw" : won ? "win" : "loss";
 
         try {
+            ObjectNode metadata = objectMapper.createObjectNode();
+            metadata.put("result", outcome);
+            metadata.put("opponentScore", aiDiscs);
+            metadata.put("difficulty", game.getAiDifficulty().name());
+            metadata.put("variant", game.getVariant().name());
+
             ObjectNode json = objectMapper.createObjectNode();
             json.put("gameSlug", "reversio");
             json.put("userId", userId);
-            json.put("outcome", outcome);
             json.put("score", humanDiscs);
-            json.put("opponentScore", aiDiscs);
-            json.put("difficulty", game.getAiDifficulty().name());
-            json.put("variant", game.getVariant().name());
+            json.set("metadata", metadata);
+            json.put("completedAt", Instant.now().toString());
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(platformApiUrl + "/api/scores"))
                     .header("Content-Type", "application/json")
-                    .header("X-Api-Key", platformApiKey)
+                    .header("Authorization", "Bearer " + platformApiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(json)))
                     .build();
 
