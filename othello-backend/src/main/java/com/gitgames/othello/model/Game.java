@@ -58,6 +58,8 @@ public class Game {
     public boolean isLastMoveWasPass() { return lastMoveWasPass; }
     public void setLastMoveWasPass(boolean lastMoveWasPass) { this.lastMoveWasPass = lastMoveWasPass; }
     public Map<Player, String> getPlatformUserIds() { return platformUserIds; }
+    public String getPlatformUserId(Player player) { return platformUserIds.get(player); }
+    public void setPlatformUserId(Player player, String userId) { platformUserIds.put(player, userId); }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getLastActivityAt() { return lastActivityAt; }
     public void setLastActivityAt(Instant lastActivityAt) { this.lastActivityAt = lastActivityAt; }

@@ -1,0 +1,76 @@
+package com.gitgames.othello.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.gitgames.othello.model.Game;
+import com.gitgames.othello.model.Player;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+@Service
+public class PlatformScoreReporter {
+
+    private static final Logger LOG = Logger.getLogger(PlatformScoreReporter.class.getName());
+
+    @Value("${platform.api.url:}")
+    private String platformApiUrl;
+
+    @Value("${platform.api.key:}")
+    private String platformApiKey;
+
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public void reportGameResult(Game game) {
+        if (platformApiUrl.isBlank() || platformApiKey.isBlank()) {
+            return;
+        }
+
+        String userId = game.getPlatformUserId(game.getHumanSide());
+        if (userId == null) {
+            return;
+        }
+
+        int humanDiscs = game.getBoard().countDiscs(game.getHumanSide());
+        Player aiSide = game.getHumanSide().opponent();
+        int aiDiscs = game.getBoard().countDiscs(aiSide);
+        boolean won = game.getWinner() == game.getHumanSide();
+        boolean draw = game.getWinner() == null;
+
+        String outcome = draw ? "draw" : won ? "win" : "loss";
+
+        try {
+            ObjectNode json = objectMapper.createObjectNode();
+            json.put("gameSlug", "othello");
+            json.put("userId", userId);
+            json.put("outcome", outcome);
+            json.put("score", humanDiscs);
+            json.put("opponentScore", aiDiscs);
+            json.put("difficulty", game.getAiDifficulty().name());
+            json.put("variant", game.getVariant().name());
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(platformApiUrl + "/api/scores"))
+                    .header("Content-Type", "application/json")
+                    .header("X-Api-Key", platformApiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(json)))
+                    .build();
+
+            httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+                    .thenAccept(r -> {
+                        if (r.statusCode() >= 400) {
+                            LOG.warning("Score report failed with status " + r.statusCode());
+                        }
+                    });
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to report score", e);
+        }
+    }
+}

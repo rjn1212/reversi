@@ -21,13 +21,16 @@ public class GameService {
     private final MoveValidator moveValidator;
     private final FlipCalculator flipCalculator;
     private final GameRepository repository;
+    private final PlatformScoreReporter scoreReporter;
 
     public GameService(GameEngine engine, MoveValidator moveValidator,
-                       FlipCalculator flipCalculator, GameRepository repository) {
+                       FlipCalculator flipCalculator, GameRepository repository,
+                       PlatformScoreReporter scoreReporter) {
         this.engine = engine;
         this.moveValidator = moveValidator;
         this.flipCalculator = flipCalculator;
         this.repository = repository;
+        this.scoreReporter = scoreReporter;
     }
 
     public Game createGame(AiDifficulty difficulty, GameVariant variant, Player humanSide) {
@@ -125,6 +128,7 @@ public class GameService {
         game.setWinner(game.getAiSide());
         game.setWinReason("Surrender");
         game.setLastActivityAt(Instant.now());
+        scoreReporter.reportGameResult(game);
         return game;
     }
 
@@ -233,6 +237,7 @@ public class GameService {
         game.setWinner(engine.getWinner(game.getBoard()));
         game.setWinReason(engine.getWinReason(game.getBoard()));
         game.setLastActivityAt(Instant.now());
+        scoreReporter.reportGameResult(game);
     }
 
     private void validateGameActive(Game game) {
