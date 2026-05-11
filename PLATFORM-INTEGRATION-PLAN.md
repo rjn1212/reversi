@@ -1,6 +1,8 @@
 # Platform Integration Plan — Reversio
 
-The backend platform integration (health, JWT filter, score reporter, Dockerfile) is implemented. This plan covers the remaining fixes needed for full compatibility with the game-platform contract.
+**Status: ALL ITEMS COMPLETE**
+
+The backend platform integration (health, JWT filter, score reporter, Dockerfile) is implemented. All fixes for full compatibility with the game-platform contract have been applied.
 
 ## Reference
 
@@ -12,7 +14,7 @@ The backend platform integration (health, JWT filter, score reporter, Dockerfile
 
 ---
 
-## 1. Adopt @gitgames/platform-sdk on the frontend
+## 1. Adopt @gitgames/platform-sdk on the frontend -- COMPLETE
 
 Replace the hand-rolled token handling in `App.tsx` and `gameApi.ts` with the platform SDK.
 
@@ -52,9 +54,9 @@ The `PlatformClient` constructor automatically handles URL param extraction, ses
 
 ---
 
-## 2. Fix score reporting auth header
+## 2. Fix score reporting auth header -- COMPLETE
 
-The platform's `/api/scores` endpoint checks `Authorization: Bearer <key>`. The current `PlatformScoreReporter` uses `X-Api-Key` which won't pass validation.
+The platform's `/api/scores` endpoint checks `Authorization: Bearer <key>`. Changed from `X-Api-Key` to `Authorization: Bearer`.
 
 **File:** `reversio-backend/src/main/java/com/gitgames/reversio/service/PlatformScoreReporter.java`
 
@@ -69,9 +71,9 @@ To:
 
 ---
 
-## 3. Fix score reporting payload format
+## 3. Fix score reporting payload format -- COMPLETE
 
-The current payload is close but needs adjustment to match the platform's `ScoreSubmission` type.
+Restructured payload to match the platform's `ScoreSubmission` type with `metadata` object and `completedAt` timestamp.
 
 **File:** `reversio-backend/src/main/java/com/gitgames/reversio/service/PlatformScoreReporter.java`
 
@@ -104,9 +106,9 @@ Changes:
 
 ---
 
-## 4. Add JWT issuer validation
+## 4. Add JWT issuer validation -- COMPLETE
 
-The `PlatformAuthFilter` verifies the signature but doesn't check the `iss` claim. The platform mints tokens with `iss: "game-platform"`.
+Added `.withIssuer("game-platform")` to JWT verifier.
 
 **File:** `reversio-backend/src/main/java/com/gitgames/reversio/config/PlatformAuthFilter.java`
 
@@ -121,9 +123,9 @@ JWT.require(algorithm).withIssuer("game-platform").build()
 
 ---
 
-## 5. Fix JWT claim extraction — wrong claim name
+## 5. Fix JWT claim extraction — wrong claim name -- COMPLETE
 
-The filter reads `name` but the platform JWT uses `username`.
+Fixed claim from `name` to `username`, attribute from `platformUserName` to `platformUsername`. Also added `email` claim extraction as `platformUserEmail`.
 
 **File:** `reversio-backend/src/main/java/com/gitgames/reversio/config/PlatformAuthFilter.java`
 
@@ -140,13 +142,13 @@ This also standardizes the attribute name (`platformUsername` not `platformUserN
 
 ---
 
-## 6. Update games.json in game-platform
+## 6. Update games.json in game-platform -- COMPLETE
 
 **File (in game-platform repo):** `games.json`
 
-Update the reversio entry:
-- `features.auth`: `false` → `true`
-- `features.scoreReporting`: `false` → `true`
+Updated the reversio entry:
+- `features.auth`: `true`
+- `features.scoreReporting`: `true`
 
 ---
 

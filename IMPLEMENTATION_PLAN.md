@@ -62,9 +62,11 @@ reversio/
 |   |   +-- config/
 |   |   |   +-- WebConfig.java           (CORS, SPA forwarding)
 |   |   |   +-- JacksonConfig.java
+|   |   |   +-- PlatformAuthFilter.java  (JWT verification, claim extraction)
 |   |   +-- controller/
-|   |   |   +-- GameController.java
-|   |   |   +-- GlobalExceptionHandler.java
+|   |   |   +-- GameController.java      (input validation on create)
+|   |   |   +-- GlobalExceptionHandler.java (handles IllegalArgumentException)
+|   |   |   +-- PlatformController.java  (health endpoint)
 |   |   |   +-- dto/
 |   |   |       +-- CreateGameRequest.java
 |   |   |       +-- MakeMoveRequest.java
@@ -96,6 +98,7 @@ reversio/
 |   |   +-- service/
 |   |       +-- GameService.java
 |   |       +-- GameRepository.java      (ConcurrentHashMap wrapper)
+|   |       +-- PlatformScoreReporter.java (async score POST with metadata)
 |   |       +-- GameNotFoundException.java
 |   |       +-- InvalidMoveException.java
 |   +-- src/main/resources/
@@ -116,7 +119,7 @@ reversio/
         +-- main.tsx
         +-- App.tsx
         +-- vite-env.d.ts
-        +-- api/gameApi.ts               (fetch wrapper with injectable auth)
+        +-- api/gameApi.ts               (fetch wrapper using @gitgames/platform-sdk)
         +-- types/game.ts                (mirrors API types)
         +-- hooks/useGame.ts             (useReducer state management)
         +-- styles/global.css            (dark theme, buttons, mobile breakpoints)
@@ -126,7 +129,7 @@ reversio/
             +-- Game/GameView.tsx + .css  (board + info layout, stacks on mobile)
             +-- Game/GameInfo.tsx + .css  (turn, scores, actions panel)
             +-- Game/ScoreBar.tsx         (proportional black/white bar)
-            +-- Common/NewGameDialog.tsx + .css (variant/difficulty/side selection)
+            +-- Common/NewGameDialog.tsx + .css (variant/difficulty/side, How to Play rules, error display)
             +-- Common/GameOverDialog.tsx + .css (win/lose/draw overlay)
 ```
 
@@ -252,7 +255,8 @@ Orchestrates: `executeMove` (place + flip all), `executePass`, `executePlacement
 ### Disc: Circular with radial gradient (black/white), CSS flip animation (`scaleX` transform), last-placed glow
 ### Valid moves: Semi-transparent yellow dots on empty valid squares
 ### ScoreBar: Proportional horizontal bar showing black/white disc counts
-### NewGameDialog: Variant (Reversio/Reversi) + Difficulty (Easy/Medium/Hard) + Side (Black/White)
+### NewGameDialog: Variant (Reversio/Reversi) + Difficulty (Easy/Medium/Hard) + Side (Black/White) + "How to Play" toggle with inline rules
+### Error display on start screen: Red banner in NewGameDialog for game creation failures
 ### GameInfo: Turn indicator, disc counts, move number, difficulty, variant, pass/surrender buttons
 ### Pass button: Shown when `mustPass` is true
 ### AI move highlight: Yellow glow on last-placed disc
@@ -314,13 +318,17 @@ Orchestrates: `executeMove` (place + flip all), `executePass`, `executePlacement
 - start.sh script (kills existing servers, starts both, cleanup on Ctrl+C), CLAUDE.md
 - **Deliverable:** Production-quality game, works on desktop and mobile
 
-### Phase 7: Deployment + Platform Integration -- PENDING
-- Dockerfile (multi-stage eclipse-temurin:21)
-- `GET /platform/health` endpoint
-- JWT verification filter
-- Update game-platform `games.json` with Reversio entry (backend 8084)
-- README.md, Reversio_Rules.md
-- **Deliverable:** Deployable, documented, platform-registered
+### Phase 7: Deployment + Platform Integration -- COMPLETE
+- Dockerfile (multi-stage eclipse-temurin:21-jdk/jre, uses mvnw)
+- `GET /platform/health` endpoint (PlatformController: status, game name, version, uptime)
+- JWT verification filter (PlatformAuthFilter: HMAC256, issuer validation, extracts sub/username/email/role)
+- `@gitgames/platform-sdk` adopted on frontend (replaces hand-rolled token handling)
+- Score reporting (PlatformScoreReporter: async POST with metadata object, Authorization Bearer header, ISO-8601 completedAt)
+- Input validation on game creation (rejects null fields with 400 error, errors displayed on start screen)
+- start.sh rewritten to match Stratego pattern (kill existing, build frontend, copy static, configurable ports)
+- Maven wrapper (mvnw) for Docker builds
+- game-platform `games.json` updated with Reversio entry (auth: true, scoreReporting: true)
+- **Deliverable:** Deployable, platform-integrated, documented
 
 ---
 

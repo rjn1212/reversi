@@ -6,12 +6,14 @@ See `IMPLEMENTATION_PLAN.md` for the full build plan and completion status.
 
 ## Status
 
-Phases 1-6 complete. The game is fully playable in a browser on desktop and mobile. Phase 7 (deployment + platform integration) is pending.
+All phases (1-7) complete. The game is fully playable in a browser on desktop and mobile, with full platform integration.
 
 - 66 backend tests (all passing)
 - 3 AI difficulty levels: Easy (random), Medium (positional heuristics), Hard (minimax + alpha-beta)
 - Both Reversio and Reversi variants
 - Mobile responsive (fits iPhone SE 375px through desktop)
+- Platform integration: health endpoint, JWT auth, score reporting, Dockerfile
+- Frontend uses `@gitgames/platform-sdk` for token handling
 
 ## Build & test
 
@@ -46,27 +48,28 @@ cd reversio-frontend && npx vite build
   - `model/` — Game, Board, Player, Position, GamePhase, GameVariant, AiDifficulty, MoveResult, MoveRecord
   - `engine/` — FlipCalculator, MoveValidator, WinConditionChecker, GameEngine
   - `ai/` — AiStrategy interface, EasyAiStrategy, MediumAiStrategy, HardAiStrategy
-  - `service/` — GameService, GameRepository (ConcurrentHashMap), exceptions
-  - `controller/` — GameController, GlobalExceptionHandler, DTOs
-  - `config/` — WebConfig (CORS, SPA forwarding), JacksonConfig
+  - `service/` — GameService, GameRepository (ConcurrentHashMap), PlatformScoreReporter, exceptions
+  - `controller/` — GameController (input validation), GlobalExceptionHandler, PlatformController (health), DTOs
+  - `config/` — WebConfig (CORS, SPA forwarding), JacksonConfig, PlatformAuthFilter (JWT)
 - `reversio-frontend/` — React SPA, bundled into backend's `static/` by Maven
-  - `api/` — gameApi.ts (fetch wrapper with injectable auth)
+  - `api/` — gameApi.ts (fetch wrapper using @gitgames/platform-sdk)
   - `hooks/` — useGame.ts (useReducer state management)
   - `components/Board/` — 8x8 CSS Grid board with responsive sizing
   - `components/Disc/` — Disc with flip animation, last-placed glow
   - `components/Game/` — GameView, GameInfo, ScoreBar
-  - `components/Common/` — NewGameDialog, GameOverDialog
+  - `components/Common/` — NewGameDialog (with How to Play rules, error display), GameOverDialog
 
 ## API endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| POST | `/api/v1/games` | Create game (`{aiDifficulty, variant, playerSide}`) |
+| POST | `/api/v1/games` | Create game (`{aiDifficulty, variant, playerSide}`, all required) |
 | GET | `/api/v1/games/{id}` | Get game state |
 | DELETE | `/api/v1/games/{id}` | Abandon game |
 | POST | `/api/v1/games/{id}/surrender` | Surrender |
 | GET | `/api/v1/games/{id}/moves` | Get valid moves |
 | POST | `/api/v1/games/{id}/moves` | Place disc (`{position}` or `{pass: true}`) |
+| GET | `/platform/health` | Health check (status, game name, version, uptime) |
 
 ## Architecture decisions
 
@@ -78,21 +81,20 @@ cd reversio-frontend && npx vite build
 
 ## Platform integration
 
-This game will be hosted on a game platform. The platform is a separate Next.js web shell that provides auth, a game catalog, and score tracking. Games integrate via a contract — they are NOT part of the platform monorepo.
+This game is hosted on a game platform — a separate Next.js web shell that provides auth, a game catalog, and score tracking. Games integrate via a contract and are NOT part of the platform monorepo.
 
-### Current platform-ready features
+### Implemented features
 
-- `gameApi.ts` uses `getHeaders()` that injects platform JWT tokens from sessionStorage
-- `Game` model has `Map<Player, String> platformUserIds` for user identity
-- CORS origins configurable via `cors.allowed-origins` property
-- `/api/v1/` namespace reserved for game API; `/platform/` reserved for integration endpoints
+- **Health endpoint:** `GET /platform/health` returns status, game name, version, uptime
+- **JWT auth filter:** `PlatformAuthFilter` verifies HMAC256 tokens with issuer `game-platform`, extracts `platformUserId`, `platformUsername`, `platformUserEmail`, `platformUserRole` as request attributes. Skips `/platform/` routes. Continues anonymously on invalid/missing tokens.
+- **Score reporting:** `PlatformScoreReporter` sends async POST to platform `/api/scores` with `Authorization: Bearer` header, payload includes `gameSlug`, `userId`, `score`, `metadata` (result, opponentScore, difficulty, variant), and `completedAt` (ISO-8601)
+- **Frontend SDK:** `@gitgames/platform-sdk` (`PlatformClient`) handles URL param extraction, sessionStorage, and auth headers
+- **Dockerfile:** Multi-stage build with eclipse-temurin:21, uses Maven wrapper
+- **CORS:** Origins configurable via `cors.allowed-origins` property, covers both `/api/` and `/platform/` paths
+- **User identity:** `Game` model has `Map<Player, String> platformUserIds`
 
-### What NOT to build yet
+### Configuration (environment variables)
 
-- No `/platform/health` endpoint (added during platform integration phase)
-- No JWT verification filter (added during platform integration phase)
-- No Dockerfile (added during deployment phase)
-- No `@gitgames/platform-sdk` dependency in the frontend
-- No `games.json` registration
-
-Platform integration is additive — Phase 7.
+- `PLATFORM_JWT_SECRET` — HMAC256 secret for JWT verification (blank = auth disabled)
+- `PLATFORM_API_URL` — Base URL for score reporting (blank = reporting disabled)
+- `PLATFORM_API_KEY` — API key sent as Bearer token for score reporting
