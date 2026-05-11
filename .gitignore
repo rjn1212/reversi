@@ -5,5 +5,5 @@ dist/
 *.iml
 .DS_Store
 *.class
-othello-frontend/node/
-othello-backend/src/main/resources/static/
+reversio-frontend/node/
+reversio-backend/src/main/resources/static/

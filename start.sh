@@ -1,36 +1,51 @@
 #!/usr/bin/env bash
-set -e
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_DIR="$ROOT/reversio-backend"
+FRONTEND_DIR="$ROOT/reversio-frontend"
 
-# Kill existing servers on our ports
-lsof -ti:8084 | xargs kill 2>/dev/null || true
-lsof -ti:5177 | xargs kill 2>/dev/null || true
+BACKEND_PORT="${BACKEND_PORT:-8084}"
+FRONTEND_PORT="${FRONTEND_PORT:-5177}"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+echo "==> Starting Reversio"
+echo "    Frontend (dev): http://localhost:$FRONTEND_PORT"
+echo "    Backend:        http://localhost:$BACKEND_PORT  (also serves static frontend)"
+echo "    Ctrl+C to stop."
+echo ""
 
-echo "Starting Othello backend on :8084..."
-cd "$SCRIPT_DIR/othello-backend"
-mvn spring-boot:run > /tmp/othello-backend.log 2>&1 &
+# Clear ports
+lsof -ti:"$BACKEND_PORT" | xargs kill -9 2>/dev/null || true
+lsof -ti:"$FRONTEND_PORT" | xargs kill -9 2>/dev/null || true
+sleep 1
+
+# Build frontend and copy static files to backend
+echo "==> Building frontend..."
+cd "$FRONTEND_DIR"
+npm install --silent
+npx vite build
+echo "==> Copying static files to backend..."
+rm -rf "$BACKEND_DIR/src/main/resources/static"
+rm -rf "$BACKEND_DIR/target/classes/static"
+cp -r "$FRONTEND_DIR/dist" "$BACKEND_DIR/src/main/resources/static"
+mkdir -p "$BACKEND_DIR/target/classes"
+cp -r "$FRONTEND_DIR/dist" "$BACKEND_DIR/target/classes/static"
+echo "    Done. Remote users can access http://<host>:$BACKEND_PORT"
+echo ""
+
+# Start backend
+cd "$BACKEND_DIR"
+mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dserver.port=$BACKEND_PORT" &
 BACKEND_PID=$!
 
-echo "Starting Othello frontend on :5177..."
-cd "$SCRIPT_DIR/othello-frontend"
-npm run dev > /tmp/othello-frontend.log 2>&1 &
+# Start frontend dev server (for local hot-reload)
+cd "$FRONTEND_DIR"
+npx vite --port "$FRONTEND_PORT" &
 FRONTEND_PID=$!
 
 cleanup() {
   echo ""
-  echo "Stopping servers..."
-  kill $BACKEND_PID $FRONTEND_PID 2>/dev/null
-  wait $BACKEND_PID $FRONTEND_PID 2>/dev/null
-  echo "Done."
+  echo "Stopping..."
+  kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+  exit 0
 }
-trap cleanup EXIT INT TERM
-
-echo ""
-echo "Backend:  http://localhost:8084"
-echo "Frontend: http://localhost:5177"
-echo ""
-echo "Press Ctrl+C to stop both servers."
-echo ""
-
-tail -f /tmp/othello-backend.log /tmp/othello-frontend.log
+trap cleanup INT TERM
+wait

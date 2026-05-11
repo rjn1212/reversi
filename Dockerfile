@@ -5,6 +5,6 @@ RUN chmod +x mvnw && ./mvnw package -DskipTests
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/othello-backend/target/*.jar app.jar
+COPY --from=build /app/reversio-backend/target/*.jar app.jar
 EXPOSE 8084
 ENTRYPOINT ["java", "-jar", "app.jar"]

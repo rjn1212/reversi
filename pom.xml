@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.gitgames</groupId>
-    <artifactId>othello-parent</artifactId>
+    <artifactId>reversio-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Othello Parent</name>
+    <name>Reversio Parent</name>
 
     <modules>
-        <module>othello-frontend</module>
-        <module>othello-backend</module>
+        <module>reversio-frontend</module>
+        <module>reversio-backend</module>
     </modules>
 </project>

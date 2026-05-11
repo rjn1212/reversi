@@ -1,8 +1,8 @@
-# Othello/Reversi -- Full Implementation Plan
+# Reversio/Reversi -- Full Implementation Plan
 
 ## Context
 
-Build a Player vs Computer Othello/Reversi game following the exact architecture pattern established by Stratego and Checkers. A single codebase supports both game variants via a `GameVariant` enum -- the only difference is initial board setup (Othello has a fixed center diagonal; Reversi starts empty with free placement of the first 4 discs in center squares). The API is platform-agnostic so the same backend serves web, future iPhone (React Native), and Android clients. All game logic lives on the server -- clients are pure renderers.
+Build a Player vs Computer Reversio/Reversi game following the exact architecture pattern established by Stratego and Checkers. A single codebase supports both game variants via a `GameVariant` enum -- the only difference is initial board setup (Reversio has a fixed center diagonal; Reversi starts empty with free placement of the first 4 discs in center squares). The API is platform-agnostic so the same backend serves web, future iPhone (React Native), and Android clients. All game logic lives on the server -- clients are pure renderers.
 
 **Stack:** Java 21 / Spring Boot 3.3.5 / Maven multi-module backend, React 19 / TypeScript 6 / Vite 8 frontend
 **Ports:** Backend 8084, Frontend 5177
@@ -49,16 +49,16 @@ Build a Player vs Computer Othello/Reversi game following the exact architecture
 ## Project Structure
 
 ```
-othello/
+reversio/
 +-- pom.xml                              (parent POM, modules: backend + frontend)
 +-- IMPLEMENTATION_PLAN.md
 +-- CLAUDE.md
 +-- start.sh
 +-- .gitignore
-+-- othello-backend/
++-- reversio-backend/
 |   +-- pom.xml
-|   +-- src/main/java/com/gitgames/othello/
-|   |   +-- OthelloApplication.java
+|   +-- src/main/java/com/gitgames/reversio/
+|   |   +-- ReversioApplication.java
 |   |   +-- config/
 |   |   |   +-- WebConfig.java           (CORS, SPA forwarding)
 |   |   |   +-- JacksonConfig.java
@@ -78,7 +78,7 @@ othello/
 |   |   |   +-- Board.java               (8x8 Player grid)
 |   |   |   +-- Player.java              (enum: BLACK, WHITE)
 |   |   |   +-- GamePhase.java           (enum: PLACEMENT, PLAYING, GAME_OVER)
-|   |   |   +-- GameVariant.java         (enum: OTHELLO, REVERSI)
+|   |   |   +-- GameVariant.java         (enum: REVERSIO, REVERSI)
 |   |   |   +-- Position.java            (record: row, col)
 |   |   |   +-- MoveResult.java          (record: position, flipped list)
 |   |   |   +-- MoveRecord.java          (record: player, position, flippedCount, wasPass)
@@ -100,12 +100,12 @@ othello/
 |   |       +-- InvalidMoveException.java
 |   +-- src/main/resources/
 |   |   +-- application.properties
-|   +-- src/test/java/com/gitgames/othello/
+|   +-- src/test/java/com/gitgames/reversio/
 |       +-- model/PositionTest.java, BoardTest.java
 |       +-- engine/MoveValidatorTest.java, FlipCalculatorTest.java, GameEngineTest.java
 |       +-- ai/AiStrategyTest.java
 |       +-- controller/GameControllerTest.java
-+-- othello-frontend/
++-- reversio-frontend/
     +-- pom.xml                          (frontend-maven-plugin)
     +-- package.json
     +-- vite.config.ts                   (proxy /api to :8084, port 5177)
@@ -136,17 +136,17 @@ othello/
 
 ### Board
 - 8x8 grid of `Player` values (BLACK/WHITE) or null for empty
-- No `Piece` objects needed -- Othello discs have no identity beyond color
-- `Board.createOthelloStart()`: places WHITE at (3,3)/(4,4), BLACK at (3,4)/(4,3) (diagonal)
+- No `Piece` objects needed -- Reversio discs have no identity beyond color
+- `Board.createReversioStart()`: places WHITE at (3,3)/(4,4), BLACK at (3,4)/(4,3) (diagonal)
 - `Board.createReversiStart()`: returns empty board
 - Methods: `placeDisc`, `flipDisc`, `getDiscAt`, `isEmpty`, `countDiscs`, `countEmpty`, `deepCopy`
 
 ### Game (Aggregate Root)
 - `id`, `board`, `currentTurn` (starts BLACK), `phase`, `winner`, `winReason`
-- `aiDifficulty`, `variant` (OTHELLO/REVERSI), `humanSide`
+- `aiDifficulty`, `variant` (REVERSIO/REVERSI), `humanSide`
 - `moveHistory` (List<MoveRecord>), `lastMoveWasPass` (consecutive-pass tracking)
 - `platformUserIds` (Map<Player, String>) for future platform auth
-- For OTHELLO: starts in PLAYING phase. For REVERSI: starts in PLACEMENT phase
+- For REVERSIO: starts in PLAYING phase. For REVERSI: starts in PLACEMENT phase
 
 ### GamePhase
 - `PLACEMENT` -- Reversi only: first 4 discs placed freely in center squares (d4/d5/e4/e5)
@@ -168,7 +168,7 @@ othello/
 | GET | `/api/v1/games/{id}/moves` | Get valid moves for current player |
 | POST | `/api/v1/games/{id}/moves` | Place disc (body: `{position}` or `{pass: true}`) |
 
-### Move API -- key Othello differences from Stratego/Checkers
+### Move API -- key Reversio differences from Stratego/Checkers
 - Move request uses `position` (where to place), not `from/to` (no piece movement)
 - Response includes `flipped` list (positions that changed color) for animation
 - Pass support: when no valid moves exist, client sends `{pass: true}`
@@ -248,11 +248,11 @@ Orchestrates: `executeMove` (place + flip all), `executePass`, `executePlacement
 
 ## Frontend Design
 
-### Board: CSS Grid 8x8 with classic Othello green (`#2d7a2d`), row (1-8) and column (a-h) labels
+### Board: CSS Grid 8x8 with classic Reversio green (`#2d7a2d`), row (1-8) and column (a-h) labels
 ### Disc: Circular with radial gradient (black/white), CSS flip animation (`scaleX` transform), last-placed glow
 ### Valid moves: Semi-transparent yellow dots on empty valid squares
 ### ScoreBar: Proportional horizontal bar showing black/white disc counts
-### NewGameDialog: Variant (Othello/Reversi) + Difficulty (Easy/Medium/Hard) + Side (Black/White)
+### NewGameDialog: Variant (Reversio/Reversi) + Difficulty (Easy/Medium/Hard) + Side (Black/White)
 ### GameInfo: Turn indicator, disc counts, move number, difficulty, variant, pass/surrender buttons
 ### Pass button: Shown when `mustPass` is true
 ### AI move highlight: Yellow glow on last-placed disc
@@ -310,7 +310,7 @@ Orchestrates: `executeMove` (place + flip all), `executePass`, `executePlacement
 - Error handling with auto-dismiss (4s timeout), loading states, AI thinking indicator (pulse animation)
 - Surrender button, row/column labels (a-h, 1-8)
 - Mobile responsive CSS: viewport-based board sizing, media queries at 400px and 480px breakpoints
-- Dark theme (#1a1a2e background), green Othello board (#2d7a2d)
+- Dark theme (#1a1a2e background), green Reversio board (#2d7a2d)
 - start.sh script (kills existing servers, starts both, cleanup on Ctrl+C), CLAUDE.md
 - **Deliverable:** Production-quality game, works on desktop and mobile
 
@@ -318,8 +318,8 @@ Orchestrates: `executeMove` (place + flip all), `executePass`, `executePlacement
 - Dockerfile (multi-stage eclipse-temurin:21)
 - `GET /platform/health` endpoint
 - JWT verification filter
-- Update game-platform `games.json` with Othello entry (backend 8084)
-- README.md, Othello_Rules.md
+- Update game-platform `games.json` with Reversio entry (backend 8084)
+- README.md, Reversio_Rules.md
 - **Deliverable:** Deployable, documented, platform-registered
 
 ---
@@ -328,13 +328,13 @@ Orchestrates: `executeMove` (place + flip all), `executePass`, `executePlacement
 
 1. **Unit tests:** `mvn test` -- 66 tests, all passing
    - PositionTest (5): validity, center squares, boundary
-   - BoardTest (10): creation, placement, flipping, counting, deep copy, Othello/Reversi starts
+   - BoardTest (10): creation, placement, flipping, counting, deep copy, Reversio/Reversi starts
    - FlipCalculatorTest (10): all 8 directions, multi-direction, no flips, edge positions
    - MoveValidatorTest (10): valid/invalid moves, all valid moves, Reversi placement, has-valid-moves
    - GameEngineTest (11): execute move with flips, pass, placement, win conditions, consecutive passes
    - AiStrategyTest (10): all 3 difficulty levels return valid moves, differentiation
    - GameControllerTest (10): create game, get state, make move, pass, surrender, valid moves, error handling
-2. **API testing:** curl flows for Othello + Reversi, all difficulties, both sides, pass scenarios, surrender
+2. **API testing:** curl flows for Reversio + Reversi, all difficulties, both sides, pass scenarios, surrender
 3. **Browser testing:** Full games for each variant x difficulty x side combination. Force pass situations. Verify draw handling. Mobile viewport testing.
 4. **Edge cases:** Opening moves, corner captures, consecutive passes, board full, 32-32 draw, AI as BLACK (first move on creation), Reversi center placement variations
 
@@ -345,7 +345,7 @@ Orchestrates: `executeMove` (place + flip all), `executePass`, `executePlacement
 | Rule | Implementation |
 |------|---------------|
 | 8x8 board | `Board.SIZE = 8` |
-| Othello: fixed diagonal center start | `Board.createOthelloStart()` |
+| Reversio: fixed diagonal center start | `Board.createReversioStart()` |
 | Reversi: empty board, free center placement | `Board.createReversiStart()`, `GamePhase.PLACEMENT` |
 | Black moves first | `Game` constructor sets `currentTurn = BLACK` |
 | Place to outflank in 8 directions | `FlipCalculator.calculateFlips()` |

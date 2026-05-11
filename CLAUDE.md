@@ -1,6 +1,6 @@
-# Othello
+# Reversio
 
-Player vs Computer Othello/Reversi game. Java 21 / Spring Boot 3.3.5 backend, React 19 / TypeScript 6 / Vite 8 frontend. Maven multi-module build. Supports both Othello (standard) and Reversi (classic) variants. Mobile responsive.
+Player vs Computer Reversio/Reversi game. Java 21 / Spring Boot 3.3.5 backend, React 19 / TypeScript 6 / Vite 8 frontend. Maven multi-module build. Supports both Reversio (an advanced version of Reversi) and Reversi (classic) variants. Mobile responsive.
 
 See `IMPLEMENTATION_PLAN.md` for the full build plan and completion status.
 
@@ -10,7 +10,7 @@ Phases 1-6 complete. The game is fully playable in a browser on desktop and mobi
 
 - 66 backend tests (all passing)
 - 3 AI difficulty levels: Easy (random), Medium (positional heuristics), Hard (minimax + alpha-beta)
-- Both Othello and Reversi variants
+- Both Reversio and Reversi variants
 - Mobile responsive (fits iPhone SE 375px through desktop)
 
 ## Build & test
@@ -20,8 +20,8 @@ Phases 1-6 complete. The game is fully playable in a browser on desktop and mobi
 ./start.sh
 
 # Or start individually:
-cd othello-backend && mvn spring-boot:run   # Backend on :8084
-cd othello-frontend && npm run dev          # Frontend on :5177
+cd reversio-backend && mvn spring-boot:run   # Backend on :8084
+cd reversio-frontend && npm run dev          # Frontend on :5177
 
 # Build everything (backend + frontend)
 mvn clean package
@@ -30,10 +30,10 @@ mvn clean package
 mvn test
 
 # Type-check frontend
-cd othello-frontend && npx tsc --noEmit
+cd reversio-frontend && npx tsc --noEmit
 
 # Build frontend only
-cd othello-frontend && npx vite build
+cd reversio-frontend && npx vite build
 ```
 
 - Backend: http://localhost:8084
@@ -42,14 +42,14 @@ cd othello-frontend && npx vite build
 
 ## Project structure
 
-- `othello-backend/` — Spring Boot REST API, all game logic, AI (3 levels)
+- `reversio-backend/` — Spring Boot REST API, all game logic, AI (3 levels)
   - `model/` — Game, Board, Player, Position, GamePhase, GameVariant, AiDifficulty, MoveResult, MoveRecord
   - `engine/` — FlipCalculator, MoveValidator, WinConditionChecker, GameEngine
   - `ai/` — AiStrategy interface, EasyAiStrategy, MediumAiStrategy, HardAiStrategy
   - `service/` — GameService, GameRepository (ConcurrentHashMap), exceptions
   - `controller/` — GameController, GlobalExceptionHandler, DTOs
   - `config/` — WebConfig (CORS, SPA forwarding), JacksonConfig
-- `othello-frontend/` — React SPA, bundled into backend's `static/` by Maven
+- `reversio-frontend/` — React SPA, bundled into backend's `static/` by Maven
   - `api/` — gameApi.ts (fetch wrapper with injectable auth)
   - `hooks/` — useGame.ts (useReducer state management)
   - `components/Board/` — 8x8 CSS Grid board with responsive sizing
