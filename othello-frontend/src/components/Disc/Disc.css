@@ -1,0 +1,30 @@
+.disc {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.disc--black {
+  background: radial-gradient(circle at 35% 35%, #555, #111);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.disc--white {
+  background: radial-gradient(circle at 35% 35%, #fff, #ccc);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.disc--flipping {
+  animation: flip-disc 0.5s ease-in-out;
+}
+
+.disc--last-placed {
+  box-shadow: 0 0 8px 3px rgba(241, 196, 15, 0.7);
+}
+
+@keyframes flip-disc {
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
