@@ -34,8 +34,9 @@ public class PlatformAuthFilter extends OncePerRequestFilter {
                 DecodedJWT jwt = verifier.verify(token);
 
                 request.setAttribute("platformUserId", jwt.getSubject());
-                request.setAttribute("platformUserRole", jwt.getClaim("role").asString());
                 request.setAttribute("platformUsername", jwt.getClaim("username").asString());
+                request.setAttribute("platformUserEmail", jwt.getClaim("email").asString());
+                request.setAttribute("platformUserRole", jwt.getClaim("role").asString());
             } catch (JWTVerificationException e) {
                 // Invalid token — continue anonymously
             }
